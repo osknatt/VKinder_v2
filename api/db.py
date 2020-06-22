@@ -16,4 +16,6 @@ class DB:
 
         ctime = datetime.datetime.now()
         with open(f"./results/{self.user_id}/{ctime.strftime('%d %B %Y %H-%M-%S')}.json", "w") as f:
-            json.dump(lovers, f)
+            json.dump(lovers, f, ensure_ascii=False, default=lambda o: '<not serializable>')
+        return ctime.strftime('%d %B %Y %H-%M-%S')
+

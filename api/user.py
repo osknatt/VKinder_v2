@@ -1,6 +1,16 @@
 import requests
+import json
 
-from local import TOKEN, APP_ID
+with open("settings.json") as f:
+    data = json.load(f)
+    TOKEN = data['TOKEN']
+
+if not TOKEN:
+    print("We coudn't find access token in settings. Go to README.md "
+          "To avoid this warning please save your access token in settings.json")
+    TOKEN = input('Enter token: ')
+    with open("settings.json", 'w') as f:
+        json.dump({'TOKEN': TOKEN}, f)
 
 version = '5.107'
 
@@ -19,6 +29,8 @@ class User:
                   }
         info = requests.get(url, params=params)
         info = info.json()
+        if 'error' in info:
+            raise ValueError(info['error']['error_msg'])
         return info
 
     def search(self, fields, sex, age_from, age_to):
