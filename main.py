@@ -2,12 +2,7 @@ import random
 
 from api.db import DB
 from api.user import User
-
-k_friends = 10
-k_groups = 7
-k_city = 7
-k_age = 8
-k_interests = 5
+from constants import *
 
 def main(lonely_user, context):
     '''
@@ -70,12 +65,10 @@ def main(lonely_user, context):
 
     ctime = db_api.save(result_dict)
 
-    print(f'The recommendations were successfully recorded to results/{context["user_id"]}/{ctime}.json. You are welcome to donate :) ')
+    # print(f'The recommendations were successfully recorded to results/{context["user_id"]}/{ctime}.json. You are welcome to donate :) ')
+    print(f'The recommendations were successfully recorded to database result.db. You are welcome to donate :) ')
 
-if __name__ == "__main__":
-    user_id = input('Enter your ID for search: ')
-
-    age = input('Enter age range in format xx-yy: ')
+def check_age(age):
     if not '-' in age:
         raise ValueError('Invalid format. Try again.')
     age = list(map(int, age.split('-')))
@@ -87,6 +80,13 @@ if __name__ == "__main__":
     if age[1] > 120:
         age[1] = 120
         print("We don't judge you, but we can't find such old people. Let's put 120 y.o. as maximum, that will be enough for you.")
+    return age
+
+def collect_input_data():
+    user_id = input('Enter your ID for search: ')
+
+    age = input('Enter age range in format xx-yy: ')
+    age = check_age(age)
     sexis = {'b': 2,
              'g': 1,
              'd': 0}
@@ -98,10 +98,13 @@ if __name__ == "__main__":
         'user_id': user_id,
         'age': age,
         'sex': sexis[sex],
-        'fields': 'sex, bdate, city, career, universities, schools, common_count, personal'\
-        'connections, activities, interests, music, movies, tv, books, games, about, photo_max',
+        'fields': 'sex, bdate, city, career, universities, schools, common_count, personal' \
+                  'connections, activities, interests, music, movies, tv, books, games, about, photo_max',
     }
+    return context
 
+if __name__ == "__main__":
+    context = collect_input_data()
     lonely_user = User(context['user_id'], context['fields'])
     db_api = DB(context['user_id'])
     main(lonely_user, context)

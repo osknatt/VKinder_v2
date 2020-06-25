@@ -1,6 +1,6 @@
 import requests
 import json
-
+from constants import version
 with open("settings.json") as f:
     data = json.load(f)
     TOKEN = data['TOKEN']
@@ -12,7 +12,7 @@ if not TOKEN:
     with open("settings.json", 'w') as f:
         json.dump({'TOKEN': TOKEN}, f)
 
-version = '5.107'
+
 
 
 class User:
@@ -20,45 +20,53 @@ class User:
         self.user_id = user_id
         self.user_info = self.get_user_info(self.user_id, fields)
 
-    def get_user_info(self, user_id, fields):
-        url = 'https://api.vk.com/method/users.get'
-        params = {'access_token': TOKEN,
-                  'user_ids': user_id,
-                  'fields': fields,
-                  'v': version
-                  }
+    def get_params(self, add_params):
+        params = {
+            'access_token': TOKEN,
+            'v': version
+        }
+        if add_params:
+            params.update(add_params)
+        return params
+
+    def get_request(self, method, params):
+        url = f'https://api.vk.com/method/{method}'
         info = requests.get(url, params=params)
         info = info.json()
         if 'error' in info:
             raise ValueError(info['error']['error_msg'])
         return info
 
+    def get_user_info(self, user_id, fields):
+        add_params = {'user_ids' : user_id,
+                  'fields': fields
+                  }
+        params = self.get_params(add_params)
+        info = self.get_request('users.get', params)
+        return info
+
     def search(self, fields, sex, age_from, age_to):
-        url = 'https://api.vk.com/method/users.search'
-        params = {'access_token': TOKEN,
+        add_params = {
                   'count': 1000,
                   'fields': fields,
                   'sex': sex,
                   'status': 1&6,
                   'age_from': age_from,
-                  'age_to': age_to,
-                  'v': version
+                  'age_to': age_to
                   }
-        data = requests.get(url, params=params)
-        data = data.json()
-        return data
+        params = self.get_params(add_params)
+        info = self.get_request('users.search', params)
+        return info
 
     def common_friends (self, user_id):
-        url = 'https://api.vk.com/method/friends.getMutual'
-        params = {'access_token': TOKEN,
-                  'target_uid': user_id,
-                  'source_uid': self.user_id,
-                  'v': version
-                  }
+        add_params = {'target_uid': user_id,
+                  'source_uid': self.user_id
+                      }
+        params = self.get_params(add_params)
         try:
-            common_friends = requests.get(url, params=params)
-            common_friends = common_friends.json()
-            common_friends = common_friends['response']
-        except:
+            info = self.get_request('friends.getMutual', params)
+            common_friends = info['response']
+        except ValueError:
             common_friends = []
+
         return len(common_friends)
